@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "minAppVersion": "0.12.0",
     "description": "Extract restaurant names, locations, and recommended dishes from YouTube, Instagram, and TikTok videos.",
-    "author": "Your Name",
+    "author": "madhatter8008",
     "authorUrl": "madhatter8008",
     "isDesktopOnly": false
   }
