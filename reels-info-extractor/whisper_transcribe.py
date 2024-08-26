@@ -3,43 +3,37 @@ import os
 import whisper
 from pydub import AudioSegment
 from tempfile import TemporaryDirectory
-from pytube import YouTube
+from yt_dlp import YoutubeDL
 
-# Function to download YouTube video and convert it to audio
+# Function to download YouTube video and convert it to audio using yt-dlp
 def download_youtube_video(video_url, output_path):
     """
     Downloads a YouTube video and converts it into an audio file (MP3 format).
-    This function uses pytube to download the video and pydub to convert it to audio.
+    This function uses yt-dlp to download the video and pydub to convert it to audio.
 
     :param video_url: The URL of the YouTube video to download.
     :param output_path: The path where the output audio file should be saved.
     :return: The path to the saved audio file.
     """
     print("Starting to download the YouTube video...")
-    yt = YouTube(video_url)
     
-    # Attempt to fetch the audio stream using a different approach
-    try:
-        video = yt.streams.filter(only_audio=True).first()
-        if video is None:
-            raise ValueError("No audio stream available for this video.")
-    except Exception as e:
-        print(f"Error: {e}")
-        raise
+    # yt-dlp options for extracting audio
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'mp3',
+            'preferredquality': '192',
+        }],
+    }
+
+    with YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(video_url, download=True)
+        download_path = ydl.prepare_filename(info_dict).rsplit('.', 1)[0] + '.mp3'
     
-    print(f"Downloading audio stream: {video.title}")
-    download_path = video.download(output_path=output_path)
-    print(f"Downloaded video to: {download_path}")
-    
-    base, ext = os.path.splitext(download_path)
-    audio_file_path = base + '.mp3'
-    print(f"Converting video to MP3 format: {audio_file_path}")
-    AudioSegment.from_file(download_path).export(audio_file_path, format='mp3')
-    
-    print("Removing the original video file...")
-    os.remove(download_path)  # Remove the original downloaded file
-    print(f"Audio file saved at: {audio_file_path}")
-    return audio_file_path
+    print(f"Audio file saved at: {download_path}")
+    return download_path
 
 # Function to split audio into chunks of ≤ 25 MB
 def split_audio(audio_file_path, chunk_size=25 * 1024 * 1024):
